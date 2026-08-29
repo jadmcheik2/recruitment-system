@@ -5,11 +5,11 @@ import { PrismaClient } from '@prisma/client';
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     await this.$connect();
-    console.log('🔌 Connected to PostgreSQL database');
+    console.log(' Connected to PostgreSQL database');
   }
 
   async onModuleDestroy() {
     await this.$disconnect();
-    console.log('🔌 Disconnected cleanly from PostgreSQL database');
+    console.log('Disconnected cleanly from PostgreSQL database');
   }
 }
