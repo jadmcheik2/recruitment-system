@@ -16,7 +16,6 @@ export class AuthService {
 
   // 1. Register new Applicant account
   async register(dto: RegisterDto) {
-    // Check if email already exists in PostgreSQL
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
     });
@@ -25,7 +24,6 @@ export class AuthService {
       throw new ConflictException('Email address is already registered');
     }
 
-    // Find default Applicant role
     const applicantRole = await this.prisma.role.findUnique({
       where: { name: 'Applicant' },
     });
@@ -34,10 +32,8 @@ export class AuthService {
       throw new NotFoundException('Default Applicant role not found. Please run seed.');
     }
 
-    // Hash password with bcrypt
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    // Create User and Candidate profile in PostgreSQL
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
@@ -63,27 +59,43 @@ export class AuthService {
     });
   }
 
-  // 2. Login user and return JWT Access & Refresh Tokens
+  // 2. Login user and return JWT Access & Refresh Tokens with Role Permissions
   async login(dto: LoginDto) {
-    // Find user by email in PostgreSQL
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
-      include: { role: true },
+      include: {
+        role: {
+          include: {
+            permissions: {
+              include: {
+                permission: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Verify password hash
     const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Generate JWT Access and Refresh tokens
-    const payload = { sub: user.id, email: user.email, role: user.role.name };
+    // Extract all permission keys assigned to this user's role
+    const permissions = user.role.permissions.map((rp) => rp.permission.key);
+
+    // Embed user role and permission keys inside JWT Token payload
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role.name,
+      permissions,
+    };
 
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET') || 'supersecret_access_key',
@@ -102,6 +114,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         role: user.role.name,
+        permissions,
       },
     };
   }
