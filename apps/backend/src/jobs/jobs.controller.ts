@@ -11,7 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JobsService } from './jobs.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
@@ -38,12 +38,14 @@ export class JobsController {
     return this.jobsService.create(req.user.userId, dto);
   }
 
-  // 2. Search / List jobs
+  // 2. Search / List jobs (Optional filters)
   @Get()
   @ApiOperation({ summary: 'Search and list jobs with optional status/search filters' })
+  @ApiQuery({ name: 'status', required: false, enum: JobStatus, description: 'Optional status filter (DRAFT, PUBLISHED, CLOSED)' })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Optional search keyword (matches title, location, type)' })
   @ApiResponse({ status: 200, description: 'List of jobs' })
   async findAll(
-    @Query('status') status?: JobStatus,
+    @Query('status') status?: string,
     @Query('search') search?: string,
   ) {
     return this.jobsService.findAll(status, search);

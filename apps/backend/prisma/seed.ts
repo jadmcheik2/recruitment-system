@@ -19,7 +19,11 @@ async function main() {
     { key: 'candidate.view', description: 'View candidate profile' },
     { key: 'candidate.update', description: 'Update candidate profile' },
     { key: 'application.view', description: 'View applications' },
-    { key: 'application.status_update', description: 'Update application pipeline status' },
+    { key: 'application.update_status', description: 'Update application pipeline status' },
+    { key: 'application.assign', description: 'Assign recruiter to application' },
+    { key: 'interview.schedule', description: 'Schedule candidate interviews' },
+    { key: 'interview.view', description: 'View scheduled interviews' },
+    { key: 'interview.evaluate', description: 'Evaluate candidate interviews' },
     { key: 'audit.view', description: 'View audit logs' },
   ];
 
@@ -57,10 +61,29 @@ async function main() {
   // 3. Map Permissions to Roles in role_permissions
   const rolePermissionMappings: Record<string, string[]> = {
     'System Admin': Object.keys(permissions), // Admin gets all permissions
-    'HR Manager': ['job.create', 'job.update', 'job.publish', 'candidate.view', 'application.view'],
-    'Recruiter': ['candidate.view', 'candidate.update', 'application.view', 'application.status_update'],
+    'HR Manager': [
+      'job.create',
+      'job.update',
+      'job.publish',
+      'candidate.view',
+      'application.view',
+      'application.update_status',
+      'application.assign',
+      'interview.schedule',
+      'interview.view',
+      'interview.evaluate',
+    ],
+    'Recruiter': [
+      'candidate.view',
+      'candidate.update',
+      'application.view',
+      'application.update_status',
+      'interview.schedule',
+      'interview.view',
+      'interview.evaluate',
+    ],
     'Applicant': ['candidate.update', 'application.view'],
-    'Interviewer': ['candidate.view', 'application.view'],
+    'Interviewer': ['candidate.view', 'application.view', 'interview.view', 'interview.evaluate'],
   };
 
   for (const [roleName, permKeys] of Object.entries(rolePermissionMappings)) {
@@ -80,7 +103,7 @@ async function main() {
   }
   console.log('Role-Permission mappings created');
 
-  // 4. Create Default Admin User Account strictly requiring environment variables (Zero hardcoded passwords)
+  // 4. Create Default Admin User Account strictly requiring environment variables
   const adminEmail = process.env.INITIAL_ADMIN_EMAIL;
   const rawAdminPassword = process.env.INITIAL_ADMIN_PASSWORD;
 

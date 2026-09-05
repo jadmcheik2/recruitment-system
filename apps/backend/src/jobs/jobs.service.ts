@@ -23,11 +23,14 @@ export class JobsService {
   }
 
   // 2. Find all jobs with optional filtering (search term and status)
-  async findAll(status?: JobStatus, search?: string) {
+  async findAll(status?: string, search?: string) {
     const where: any = {};
 
     if (status) {
-      where.status = status;
+      const normalizedStatus = status.toUpperCase() as JobStatus;
+      if (Object.values(JobStatus).includes(normalizedStatus)) {
+        where.status = normalizedStatus;
+      }
     }
 
     if (search) {
@@ -40,7 +43,7 @@ export class JobsService {
 
     return this.prisma.job.findMany({
       where,
-      orderBy: {},
+      orderBy: { id: 'desc' },
       include: {
         creator: {
           select: { id: true, email: true },

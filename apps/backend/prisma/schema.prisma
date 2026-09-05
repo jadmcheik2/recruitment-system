@@ -1,7 +1,8 @@
 // Strict Prisma Schema for Internal Recruitment Management System matching Section 10 of PDF
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "rhel-openssl-1.0.x"]
 }
 
 datasource db {
@@ -125,13 +126,14 @@ model Candidate {
   @@map("candidates")
 }
 
-// 7. applications: id, job_id, candidate_id, recruiter_id, status
+// 7. applications: id, job_id, candidate_id, recruiter_id, status, created_at
 model Application {
   id          String            @id @default(uuid())
   jobId       String            @map("job_id")
   candidateId String            @map("candidate_id")
   recruiterId String?           @map("recruiter_id")
   status      ApplicationStatus @default(APPLIED)
+  createdAt   DateTime          @default(now()) @map("created_at")
 
   job        Job                @relation(fields: [jobId], references: [id], onDelete: Cascade)
   candidate  Candidate          @relation(fields: [candidateId], references: [id], onDelete: Cascade)
@@ -145,11 +147,11 @@ model Application {
 
 // 8. application_events: id, application_id, from_status, to_status, changed_by
 model ApplicationEvent {
-  id            String            @id @default(uuid())
-  applicationId String            @map("application_id")
-  fromStatus    ApplicationStatus @map("from_status")
-  toStatus      ApplicationStatus @map("to_status")
-  changedBy     String            @map("changed_by")
+  id            String             @id @default(uuid())
+  applicationId String             @map("application_id")
+  fromStatus    ApplicationStatus? @map("from_status")
+  toStatus      ApplicationStatus  @map("to_status")
+  changedBy     String             @map("changed_by")
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   changer     User        @relation("ChangedByEvents", fields: [changedBy], references: [id])
@@ -174,12 +176,12 @@ model Interview {
 
 // 10. notifications: id, user_id, type, title, message, read_at
 model Notification {
-  id     String    @id @default(uuid())
-  userId String    @map("user_id")
-  type   String
-  title  String
+  id      String    @id @default(uuid())
+  userId  String    @map("user_id")
+  type    String
+  title   String
   message String
-  readAt DateTime? @map("read_at")
+  readAt  DateTime? @map("read_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
